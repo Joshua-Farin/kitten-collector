@@ -5,6 +5,7 @@ import akka.actor.testkit.typed.scaladsl.ScalaTestWithActorTestKit
 import org.scalatest.wordspec.AnyWordSpecLike
 import com.example.Notifier.Notification
 import com.example.KittenShipper.KittenShipment
+import com.example.KittenProcessor.Kitten
 
 //#definition
 class AkkaQuickstartSpec
@@ -13,15 +14,24 @@ class AkkaQuickstartSpec
 //#definition
 
   "A KittenShipper" must {
-    // #test
-    "notify to notifier" in {
+
+    "vaccinate batch of 1 cat" in {
       val replyProbe = createTestProbe[Notification]()
       val underTest = spawn(KittenShipper())
-      underTest ! KittenShipment(0, "acorn", true, replyProbe.ref)
-      replyProbe.expectMessage(Notification(0, true))
+      val unvax = Kitten(id = 0, name = "Acorn", vaccinated = false)
+      val expectedKittens = Map(unvax.id -> unvax)
+      underTest ! KittenShipment(kitten = unvax, replyTo = replyProbe.ref)
+      replyProbe.expectMessage(Notification(expectedKittens))
     }
-    // #test
-  }
 
+    "no cats to vaccinate" in {
+      val replyProbe = createTestProbe[Notification]()
+      val underTest = spawn(KittenShipper())
+      val unvax = Kitten(id = 1, name = "Tuna", vaccinated = false)
+      val expectedKittens = Map(unvax.id -> unvax)
+      underTest ! KittenShipment(kitten = unvax, replyTo = replyProbe.ref)
+      replyProbe.expectMessage(Notification(expectedKittens))
+    }
+  }
 }
 //#full-example
